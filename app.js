@@ -1,8 +1,7 @@
 const express = require('express');
 const app = express();
-const path = require('path');
 const mongoose = require('mongoose');
-
+const path = require('path');
 
 // Setting routers
 const indexRouter = require('./routes/index');
@@ -20,8 +19,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
-//TODO: Fix connection to DB
-mongoose.connect('mongodb+srv://yaniv208:Shlomo55@cluster0.8zqxl.mongodb.net/test');
+mongoose.connect('mongodb+srv://yaniv208:Shlomo55@cluster0.8zqxl.mongodb.net/costmanager')
+    .catch(error => console.log(error));
 
 // Connect to db
 module.exports = app;
