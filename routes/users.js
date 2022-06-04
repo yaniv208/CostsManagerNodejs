@@ -16,7 +16,7 @@ const userModel = mongoose.model('users', userSchema);
 /**
  * Fetch all users from DB, if none exists, get a corresponding message.
  */
-router.get('/getall', async function(req, res, next) {
+router.get('/getall', async function(req, res) {
   let users;
   users = await userModel.find({});
 
@@ -49,17 +49,15 @@ router.post('/add', function(req, res) {
  * Delete all the users that exist in the 'users' collection.
  */
 
-router.delete('/deleteall', async function(req, res, next) {
+router.delete('/deleteall', async function(req, res) {
   userModel.deleteMany({})
       .then(users => res.status(200).send('All of the users were successfully deleted.'))
       .catch(error => res.status(400).send('There was a problem deleting users. \n' + error));
 });
 
-
 /**
  * Delete a specific user from the database, according to their individual ID.
  */
-
 router.delete('/delete/:userId', async function(req, res, next) {
   let idToBeDeleted;
   idToBeDeleted = req.params.userId;
@@ -68,7 +66,6 @@ router.delete('/delete/:userId', async function(req, res, next) {
       .send('User deleted successfully.'))
       .catch(error => res.status(400).send('There was a problem deleting the user. \n' + error));
 });
-
 
 // Mapping a router and all logic that's required to map into specific endpoint.
 module.exports = router;
