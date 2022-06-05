@@ -1,5 +1,5 @@
 const express = require('express');
-const Report = require("../schemas/reportschema");
+const Report = require('../schemas/reportschema');
 const router = express.Router();
 
 /**
@@ -18,7 +18,8 @@ router.get('/get', async function(req, res) {
     // Report exists in DB and was fetched successfully
     if(monthlyReport.length === 1){
         res.status(200)
-            .send(`Total sum for ${monthToCheck}/${yearToCheck} is ${monthlyReport[0].totalSum}`);
+            .send(`Total sum at ${monthToCheck}/${yearToCheck} is ${monthlyReport[0].totalSum}`
+            + ` for user ${idToCheck}.`);
     }
     // A report doesn't exist in the collection, create one, save it on the db and show the sum to the user.
     else{

@@ -1,6 +1,6 @@
 const express = require('express');
-const Cost = require("../schemas/costschema");
-const Report = require("../schemas/reportschema");
+const Cost = require('../schemas/costschema');
+const Report = require('../schemas/reportschema');
 const router = express.Router();
 
 /**
