@@ -1,7 +1,7 @@
 const express = require('express');
-const costModel = require("../schemas/costschema");
+const Cost = require("../schemas/costschema");
+const Report = require("../schemas/reportschema");
 const router = express.Router();
-const reportModel = require("../schemas/reportschema");
 
 /**
  * Add a new cost into the 'costs' collection into the database.
@@ -10,24 +10,27 @@ const reportModel = require("../schemas/reportschema");
 router.post('/add', async function(req, res) {
     let cost;
 
-    cost = new costModel({id:req.query.id, description:req.query.description,
+    cost = new Cost({id:req.query.id, description:req.query.description,
         sum:req.query.sum, date:req.query.date, category:req.query.category});
 
     const date = new Date(req.query.date);
     const yearToCheck = date.getFullYear();
     const monthToCheck = date.getMonth() + 1;
 
-    const report = await reportModel.find({id:req.query.id, month:date.getMonth()+1, year:date.getFullYear()});
+    // Check if there's an existing report of this specific month and date
+    const report = await Report.find({id:req.query.id, month:date.getMonth()+1, year:date.getFullYear()});
 
     if(report.length === 1){ // If there's already a report for the corresponding month and year
+
+        // Calculating the new sum of the monthly report
         const oldSum = Number.parseFloat(report[0].totalSum);
         const sumToAdd = Number.parseFloat(req.query.sum)
-
         const updatedSum = oldSum + sumToAdd;
-        await reportModel.findOneAndUpdate({id:req.query.id, month:monthToCheck, year:yearToCheck},
+
+        await Report.findOneAndUpdate({id:req.query.id, month:monthToCheck, year:yearToCheck},
             {totalSum:updatedSum});
-    } else{
-        const monthlyReport = new reportModel({id:req.query.id, month:monthToCheck, year:yearToCheck,
+    }else { // If there isn't any report regarding this date
+        const monthlyReport = new Report({id:req.query.id, month:monthToCheck, year:yearToCheck,
             totalSum:req.query.sum});
 
         monthlyReport.save()
@@ -35,7 +38,7 @@ router.post('/add', async function(req, res) {
     }
 
     // Saving the new cost into DB.
-    cost.save().then(user => res.status(201).json(user + '\n\n Cost saved successfully!'))
+    await cost.save().then(user => res.status(201).json(user + '\n\n Cost saved successfully!'))
         .catch(error => res.status(400).send('There was a problem saving the cost. \n' + error));
 });
 
@@ -44,12 +47,11 @@ router.post('/add', async function(req, res) {
  */
 router.get('/getall', async function(req, res) {
     let costs;
-    costs = await costModel.find({});
+    costs = await Cost.find({});
 
     if(costs.length === 0){
         res.status(200).send('There aren\'t any saved costs');
-    }
-    else{
+    }else{
         res.status(200).send(costs);
     }
 });
@@ -58,7 +60,7 @@ router.get('/getall', async function(req, res) {
  * Delete all the costs that exist in the 'costs' collection.
  */
 router.delete('/deleteall', async function(req, res) {
-    costModel.deleteMany({})
+    await Cost.deleteMany({})
         .then(() => res.status(200).send('All of the costs were successfully deleted.'))
         .catch(error => res.status(400).send('There was a problem deleting costs. \n' + error));
 });

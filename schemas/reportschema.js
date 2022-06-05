@@ -7,6 +7,6 @@ const reportSchema = new mongoose.Schema({
     totalSum:Number
 });
 
-const reportModel = mongoose.model('reports', reportSchema);
+const Report = mongoose.model('reports', reportSchema);
 
-module.exports = reportModel;
+module.exports = Report;

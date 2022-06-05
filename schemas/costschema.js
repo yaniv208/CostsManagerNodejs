@@ -8,6 +8,6 @@ const costSchema = new mongoose.Schema({
     category:String
 });
 
-const costModel = new mongoose.model('costs', costSchema);
+const Cost = new mongoose.model('costs', costSchema);
 
-module.exports = costModel;
+module.exports = Cost;
