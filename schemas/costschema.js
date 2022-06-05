@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const costSchema = new mongoose.Schema({
-    id:String,
+    id:String, // id = email address
     description:String,
     sum:Number,
     date:Date,

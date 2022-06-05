@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const reportSchema = new mongoose.Schema({
-    id:String,
+    id:String, // id = email address
     month:Number,
     year:Number,
     totalSum:Number

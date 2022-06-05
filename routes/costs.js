@@ -14,32 +14,37 @@ router.post('/add', async function(req, res) {
         sum:req.query.sum, date:req.query.date, category:req.query.category});
 
     const date = new Date(req.query.date);
-    const yearToCheck = date.getFullYear();
-    const monthToCheck = date.getMonth() + 1;
 
-    // Check if there's an existing report of this specific month and date
-    const report = await Report.find({id:req.query.id, month:date.getMonth()+1, year:date.getFullYear()});
+    if(isNaN(date)){ // If the inputted date wasn't valid.
+        res.status(400).send('Invalid date input, please try again.');
+    } else{
+        const yearToCheck = date.getFullYear();
+        const monthToCheck = date.getMonth() + 1;
 
-    if(report.length === 1){ // If there's already a report for the corresponding month and year
+        // Check if there's an existing report of this specific month and date
+        const report = await Report.find({id:req.query.id, month:date.getMonth()+1, year:date.getFullYear()});
 
-        // Calculating the new sum of the monthly report
-        const oldSum = Number.parseFloat(report[0].totalSum);
-        const sumToAdd = Number.parseFloat(req.query.sum)
-        const updatedSum = oldSum + sumToAdd;
+        if(report.length === 1){ // If there's already a report for the corresponding month and year
 
-        await Report.findOneAndUpdate({id:req.query.id, month:monthToCheck, year:yearToCheck},
-            {totalSum:updatedSum});
-    }else { // If there isn't any report regarding this date
-        const monthlyReport = new Report({id:req.query.id, month:monthToCheck, year:yearToCheck,
-            totalSum:req.query.sum});
+            // Calculating the new sum of the monthly report
+            const oldSum = Number.parseFloat(report[0].totalSum);
+            const sumToAdd = Number.parseFloat(req.query.sum)
+            const updatedSum = oldSum + sumToAdd;
 
-        monthlyReport.save()
-            .catch(error => res.status(400).send('There was a problem saving the report. \n' + error));
+            await Report.findOneAndUpdate({id:req.query.id, month:monthToCheck, year:yearToCheck},
+                {totalSum:updatedSum});
+        }else { // If there isn't any report regarding this date
+            const monthlyReport = new Report({id:req.query.id, month:monthToCheck, year:yearToCheck,
+                totalSum:req.query.sum});
+
+            monthlyReport.save()
+                .catch(error => res.status(400).send('There was a problem saving the report. \n' + error));
+        }
+
+        // Saving the new cost into DB.
+        await cost.save().then(user => res.status(201).json(user + '\n\n Cost saved successfully!'))
+            .catch(error => res.status(400).send('There was a problem saving the cost. \n' + error));
     }
-
-    // Saving the new cost into DB.
-    await cost.save().then(user => res.status(201).json(user + '\n\n Cost saved successfully!'))
-        .catch(error => res.status(400).send('There was a problem saving the cost. \n' + error));
 });
 
 /**

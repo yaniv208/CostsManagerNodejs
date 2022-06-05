@@ -11,20 +11,24 @@ router.get('/get', async function(req, res) {
     const monthToCheck = req.query.month;
     const yearToCheck = req.query.year;
 
-    const monthlyReport = await Report.find({id:idToCheck, month:monthToCheck, year:yearToCheck})
-        .catch(error => res.status(400)
-            .send('There was a problem retrieving the report. \n' + error));
+    if(monthToCheck < 1 || monthToCheck > 12 || yearToCheck < 1900){ // Invalid input
+        res.status(400).send('Invalid date input, please try again.');
+    } else{
+        const monthlyReport = await Report.find({id:idToCheck, month:monthToCheck, year:yearToCheck})
+            .catch(error => res.status(400)
+                .send('There was a problem retrieving the report. \n' + error));
 
-    // Report exists in DB and was fetched successfully
-    if(monthlyReport.length === 1){
-        res.status(200)
-            .send(`Total sum at ${monthToCheck}/${yearToCheck} is ${monthlyReport[0].totalSum}`
-            + ` for user ${idToCheck}.`);
-    }
-    // A report doesn't exist in the collection, create one, save it on the db and show the sum to the user.
-    else{
-        res.status(200)
-            .send(`No report for ${monthToCheck}/${yearToCheck} was found.`);
+        // Report exists in DB and was fetched successfully
+        if(monthlyReport.length === 1){
+            res.status(200)
+                .send(`Total sum at ${monthToCheck}/${yearToCheck} is ${monthlyReport[0].totalSum}`
+                    + ` for user ${idToCheck}.`);
+        }
+        // A report doesn't exist in the collection, create one, save it on the db and show the sum to the user.
+        else{
+            res.status(200)
+                .send(`No report for ${monthToCheck}/${yearToCheck} was found.`);
+        }
     }
 });
 
