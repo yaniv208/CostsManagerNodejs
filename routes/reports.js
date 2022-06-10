@@ -8,9 +8,12 @@ const router = express.Router();
 router.get('/get', async function(req, res) {
     // Params of wanted report to fetch
     const idToCheck = req.query.id;
+    const monthToCheck = req.query.month;
+    const yearToCheck = req.query.year;
     const currentYear = new Date().getFullYear();
-    const isMonthValid = (req.query.month >= 0 && req.query.month <= 11);
-    const isYearValid = (req.query.year >= 1900 && req.query.year <= currentYear);
+
+    const isMonthValid = (monthToCheck >= 0 && monthToCheck <= 11);
+    const isYearValid = (yearToCheck >= 1900 && yearToCheck <= currentYear);
 
     if(!(isMonthValid && isYearValid)){ // Invalid input
         res.status(400).send('Invalid date input, please try again.');
