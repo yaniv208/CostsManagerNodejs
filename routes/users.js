@@ -10,7 +10,7 @@ router.get('/getall', async function(req, res) {
   users = await User.find({});
 
   if(users.length === 0){ // if users don't exist in the collection
-    res.status(200).send('There aren\'t any saved users');
+    res.status(404).send('There aren\'t any saved users in the database.');
   }
   else{
     res.status(200).send(users);
@@ -24,32 +24,31 @@ router.get('/getall', async function(req, res) {
 router.post('/add', async function(req, res) {
   let user;
 
-  user = new User({id:req.query.id, firstName:req.query.firstName, lastName:req.query.lastName,
-    birthday:req.query.birthday, maritalStatus:req.query.maritalStatus});
+  // Validating new user's birthday date
+  const birthdayToValidate = new Date(req.query.birthday);
+  const currentYear = new Date().getFullYear();
 
-  // Saving the new user into DB.
-  await user.save().then(user => res.status(201).json(user) + '\n\nUser saved successfully!')
-      .catch(error => res.status(400).send('There was a problem saving the user. \n' + error));
-});
+  const isDayValid = (0 <= birthdayToValidate.getDay() && birthdayToValidate.getDay() <= 30);
+  const isMonthValid = (0 <= birthdayToValidate.getMonth() && birthdayToValidate.getMonth() <= 11);
+  const isYearValid = (1900 <= birthdayToValidate.getFullYear() && birthdayToValidate.getFullYear() <= currentYear);
 
-/**
- * Delete all the users that exist in the 'users' collection.
- */
-router.delete('/deleteall', async function(req, res) {
-  await User.deleteMany({})
-      .then(() => res.status(200).send('All of the users were successfully deleted.'))
-      .catch(error => res.status(400).send('There was a problem deleting users. \n' + error));
-});
+  // Validating new user's email address
+  const emailAddress = req.query.id;
+  const patternToCheck = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
 
-/**
- * Delete a specific user from the database, according to their individual ID.
- */
-router.delete('/delete/:userId', async function(req, res) {
-  const idToBeDeleted = req.params.userId;
+  const isEmailValid = patternToCheck.test(emailAddress);
 
-  await User.deleteOne({id:idToBeDeleted}).then(() => res.status(200)
-      .send('User deleted successfully.'))
-      .catch(error => res.status(400).send('There was a problem deleting the user. \n' + error));
+  if(isDayValid && isMonthValid && isYearValid && isEmailValid){
+    user = new User({id:emailAddress, firstName:req.query.firstName, lastName:req.query.lastName,
+      birthday:birthdayToValidate, maritalStatus:req.query.maritalStatus});
+
+    // Saving the new user into DB.
+    await user.save().then(user => res.status(201).json(user) + '\n\nUser saved successfully!')
+        .catch(error => res.status(400).send('There was a problem saving the user. \n' + error));
+  } else{
+    res.status(400).send('Invalid Date/E-Mail address input. Please try again.');
+  }
+
 });
 
 // Mapping a router and all logic that's required to map into specific endpoint.

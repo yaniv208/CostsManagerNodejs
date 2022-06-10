@@ -24,6 +24,10 @@ router.post('/add', async function(req, res) {
         // Check if there's an existing report of this specific month and date
         const report = await Report.find({id:req.query.id, month:date.getMonth()+1, year:date.getFullYear()});
 
+        // Creating a template for a cost to be included in a future report
+        let costConcatenation = `\n${req.query.description}, Category: ${req.query.category}, `
+            + `Sum: ${req.query.sum}`;
+
         if(report.length === 1){ // If there's already a report for the corresponding month and year
 
             // Calculating the new sum of the monthly report
@@ -31,11 +35,15 @@ router.post('/add', async function(req, res) {
             const sumToAdd = Number.parseFloat(req.query.sum)
             const updatedSum = oldSum + sumToAdd;
 
+            // Concatenating the current cost into the list of costs
+            let currentListOfCosts = report[0].listOfCosts;
+            currentListOfCosts += costConcatenation;
+
             await Report.findOneAndUpdate({id:req.query.id, month:monthToCheck, year:yearToCheck},
-                {totalSum:updatedSum});
+                {totalSum:updatedSum, listOfCosts:currentListOfCosts});
         }else { // If there isn't any report regarding this date
             const monthlyReport = new Report({id:req.query.id, month:monthToCheck, year:yearToCheck,
-                totalSum:req.query.sum});
+                totalSum:req.query.sum, listOfCosts:costConcatenation});
 
             monthlyReport.save()
                 .catch(error => res.status(400).send('There was a problem saving the report. \n' + error));
@@ -55,7 +63,7 @@ router.get('/getall', async function(req, res) {
     costs = await Cost.find({});
 
     if(costs.length === 0){
-        res.status(200).send('There aren\'t any saved costs');
+        res.status(404).send('There aren\'t any saved costs');
     }else{
         res.status(200).send(costs);
     }
