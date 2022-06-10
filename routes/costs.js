@@ -69,14 +69,5 @@ router.get('/getall', async function(req, res) {
     }
 });
 
-/**
- * Delete all the costs that exist in the 'costs' collection.
- */
-router.delete('/deleteall', async function(req, res) {
-    await Cost.deleteMany({})
-        .then(() => res.status(200).send('All of the costs were successfully deleted.'))
-        .catch(error => res.status(400).send('There was a problem deleting costs. \n' + error));
-});
-
 // Mapping a router and all logic that's required to map into specific endpoint.
 module.exports = router;
