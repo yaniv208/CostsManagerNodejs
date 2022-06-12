@@ -10,17 +10,20 @@ const router = express.Router();
  */
 router.post('/add', async function(req, res) {
     const idToCheck = req.query.id;
-    let user = await User.find({id:idToCheck})
+    const sumToCheck = req.query.sum;
+
+    if(sumToCheck < 0){
+        res.status(400).send("Sum must be greater than 0!");
+    }
+
+    const cost = new Cost({id:idToCheck, description:req.query.description,
+        sum:sumToCheck, date:req.query.date, category:req.query.category});
+
+    const user = await User.find({id:idToCheck})
         .catch(error => res.status(400).send(`There was an error finding user ${idToCheck}`)
         + error);
 
     if(user.length === 1){
-        let cost;
-
-        cost = new Cost({id:req.query.id, description:req.query.description,
-            sum:req.query.sum, date:req.query.date, category:req.query.category});
-
-
         const date = new Date(req.query.date);
 
         if(isNaN(date)){ // If the inputted date wasn't valid.
@@ -62,7 +65,7 @@ router.post('/add', async function(req, res) {
                 .catch(error => res.status(400).send('There was a problem saving the cost. \n' + error));
         }
     } else{ // User doesn't exist in DB.
-        res.status(404).send(idToCheck + ` doesn\'t exist in DB.`);
+        res.status(404).send(`User ${idToCheck} doesn\'t exist in DB.`);
     }
 
 });
@@ -71,8 +74,7 @@ router.post('/add', async function(req, res) {
  * Fetch all costs from DB, if none exists, get a corresponding message.
  */
 router.get('/getall', async function(req, res) {
-    let costs;
-    costs = await Cost.find({});
+    const costs = await Cost.find({});
 
     if(costs.length === 0){
         res.status(404).send('There aren\'t any saved costs');
