@@ -34,7 +34,7 @@ router.post('/add', async function(req, res) {
 
   // Validating new user's email address
   const emailAddress = req.query.id;
-  const patternToCheck = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+  const patternToCheck = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,5})+$/;
 
   const isEmailValid = patternToCheck.test(emailAddress);
 
@@ -43,7 +43,7 @@ router.post('/add', async function(req, res) {
       birthday:birthdayToValidate, maritalStatus:req.query.maritalStatus});
 
     // Saving the new user into DB.
-    await user.save().then(user => res.status(201).json(user) + '\n\nUser saved successfully!')
+    await user.save().then(user => res.status(201).json(user + '\n\nUser saved successfully!'))
         .catch(error => res.status(400).send('There was a problem saving the user. \n' + error));
   } else{
     res.status(400).send('Invalid Date/E-Mail address input. Please try again.');
