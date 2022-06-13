@@ -27,28 +27,40 @@ router.post('/add', async function(req, res) {
   // Validating new user's birthday date
   const birthdayToValidate = new Date(req.query.birthday);
   const currentYear = new Date().getFullYear();
-
   const isDayValid = (0 <= birthdayToValidate.getDay() && birthdayToValidate.getDay() <= 30);
   const isMonthValid = (0 <= birthdayToValidate.getMonth() && birthdayToValidate.getMonth() <= 11);
   const isYearValid = (1900 <= birthdayToValidate.getFullYear() && birthdayToValidate.getFullYear() <= currentYear);
+  const isBirthdayValid = isDayValid && isMonthValid && isYearValid;
+
+  if(!isBirthdayValid){
+    res.status(400).send('Invalid birthday input. Please try again.');
+  }
 
   // Validating new user's email address
   const emailAddress = req.query.id;
   const patternToCheck = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,5})+$/;
-
   const isEmailValid = patternToCheck.test(emailAddress);
+  if(!isEmailValid){
+    res.status(400).send('Invalid E-Mail pattern input. Please try again.');
+  }
 
-  if(isDayValid && isMonthValid && isYearValid && isEmailValid){
+  const characters = /^[a-zA-Z]+$/;
+  const isFirstNameCharsOnly = characters.test(req.query.firstName);
+  const isLastNameCharsOnly = characters.test(req.query.lastName);
+  const isNameValid = isFirstNameCharsOnly && isLastNameCharsOnly;
+
+  if(!isNameValid){
+    res.status(400).send('Invalid name input (Only characters allowed). Please try again. ');
+  }
+
+  if(isEmailValid && isBirthdayValid && isNameValid){
     user = new User({id:emailAddress, firstName:req.query.firstName, lastName:req.query.lastName,
       birthday:birthdayToValidate, maritalStatus:req.query.maritalStatus});
 
     // Saving the new user into DB.
     await user.save().then(user => res.status(201).json(user + '\n\nUser saved successfully!'))
         .catch(error => res.status(400).send('There was a problem saving the user. \n' + error));
-  } else{
-    res.status(400).send('Invalid Date/E-Mail address input. Please try again.');
   }
-
 });
 
 // Mapping a router and all logic that's required to map into specific endpoint.
