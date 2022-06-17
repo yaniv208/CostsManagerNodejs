@@ -12,18 +12,19 @@ router.post('/add', async function(req, res) {
     const idToCheck = req.query.id;
     const sumToCheck = req.query.sum;
 
-    if(sumToCheck < 0){
-        res.status(400).send("Sum must be greater than 0!");
-    }
-
     const cost = new Cost({id:idToCheck, description:req.query.description,
         sum:sumToCheck, date:req.query.date, category:req.query.category});
 
     const user = await User.find({id:idToCheck})
         .catch(error => res.status(400).send(`There was an error finding user ${idToCheck}`)
-        + error);
+            + error);
 
-    if(user.length === 1){
+    if(sumToCheck < 0){
+        res.status(400).send("Sum must be greater than 0!");
+    }
+
+    else if(user.length === 1){
+
         const date = new Date(req.query.date);
 
         if(isNaN(date)){ // If the inputted date wasn't valid.
