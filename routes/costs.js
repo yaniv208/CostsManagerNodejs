@@ -9,66 +9,74 @@ const router = express.Router();
  * Return a corresponding message if any error occurs.
  */
 router.post('/add', async function(req, res) {
-    const idToCheck = req.query.id;
-    const sumToCheck = req.query.sum;
+    const userId = req.body.id;
+    const costSum = req.body.sum;
 
-    const cost = new Cost({id:idToCheck, description:req.query.description,
-        sum:sumToCheck, date:req.query.date, category:req.query.category});
+    const costDate = new Date(req.body.date);
+    const costYear = costDate.getFullYear();
+    const costMonth = costDate.getMonth() + 1;
 
-    const user = await User.find({id:idToCheck})
-        .catch(error => res.status(400).send(`There was an error finding user ${idToCheck}`)
-            + error);
+    const user = await User.find({id:userId});
 
-    if(sumToCheck < 0){
-        res.status(400).send("Sum must be greater than 0!");
+    let isSumValid = true;
+    let isUserValid = true;
+    let isDateValid = true;
+    let message = '';   // Message to user in case there was any problem with the inputs
+
+    // Check if the sum is positive number
+    if(costSum <= 0){
+        isSumValid = false;
+        message = 'Cost sum must be greater than 0.';
     }
 
-    else if(user.length === 1){
+    // Check if the user already exists in the users collection
+    if(user.length < 1){
+        isUserValid = false;
+        message = 'The user does not exist in the database.';
+    }
 
-        const date = new Date(req.query.date);
+    if(isNaN(costDate)){ // If the inputted date is not valid
+        isDateValid = false;
+        message = 'Invalid date input.';
+    }
 
-        if(isNaN(date)){ // If the inputted date wasn't valid.
-            res.status(400).send('Invalid date input, please try again.');
-        } else{
-            const yearToCheck = date.getFullYear();
-            const monthToCheck = date.getMonth() + 1;
+    if(isSumValid && isUserValid && isDateValid){
+        const cost = new Cost({id:userId, description:req.body.description,
+            sum:costSum, date:costDate, category:req.body.category});
 
-            // Check if there's an existing report of this specific month and date
-            const report = await Report.find({id:req.query.id, month:date.getMonth()+1, year:date.getFullYear()});
+        // Check if there's an existing report of this specific month and year
+        const report = await Report.find({id:userId, month:costMonth, year:costYear});
 
-            // Creating a template for a cost to be included in a future report
-            let costConcatenation = `\n${req.query.description}, Category: ${req.query.category}, `
-                + `Sum: ${req.query.sum}`;
+        // Creating a template for a cost to be included in a future report
+        let costConcatenation = `\n${req.body.description} --- Category: ${req.body.category}, `
+            + `Sum: ${costSum}`;
 
-            if(report.length === 1){ // If there's already a report for the corresponding month and year
+        if(report.length === 1){ // If there's already a report for the corresponding month and year
+            // Calculating the new sum of the monthly report
+            const oldSum = Number.parseFloat(report[0].totalSum);
+            const sumToAdd = Number.parseFloat(costSum);
+            const updatedSum = oldSum + sumToAdd;
 
-                // Calculating the new sum of the monthly report
-                const oldSum = Number.parseFloat(report[0].totalSum);
-                const sumToAdd = Number.parseFloat(req.query.sum)
-                const updatedSum = oldSum + sumToAdd;
+            // Concatenating the current cost into the list of costs
+            let currentListOfCosts = report[0].listOfCosts;
+            currentListOfCosts.push(costConcatenation);
 
-                // Concatenating the current cost into the list of costs
-                let currentListOfCosts = report[0].listOfCosts;
-                currentListOfCosts += costConcatenation;
+            await Report.findOneAndUpdate({id:userId, month:costMonth, year:costYear},
+                {totalSum:updatedSum, listOfCosts:currentListOfCosts});
 
-                await Report.findOneAndUpdate({id:req.query.id, month:monthToCheck, year:yearToCheck},
-                    {totalSum:updatedSum, listOfCosts:currentListOfCosts});
-            }else { // If there isn't any report regarding this date
-                const monthlyReport = new Report({id:req.query.id, month:monthToCheck, year:yearToCheck,
-                    totalSum:req.query.sum, listOfCosts:costConcatenation});
+        } else{ // If there isn't any report regarding this date
+            const monthlyReport = new Report({id:userId, month:costMonth, year:costYear,
+                totalSum:costSum, listOfCosts:costConcatenation});
 
-                monthlyReport.save()
-                    .catch(error => res.status(400).send('There was a problem saving the report. \n' + error));
-            }
-
-            // Saving the new cost into DB.
-            await cost.save().then(user => res.status(201).json(user + '\n\n Cost saved successfully!'))
-                .catch(error => res.status(400).send('There was a problem saving the cost. \n' + error));
+            monthlyReport.save()
+                .catch(error => res.status(400).send('There was a problem saving the report. \n' + error));
         }
-    } else{ // User doesn't exist in DB.
-        res.status(404).send(`User ${idToCheck} doesn\'t exist in DB.`);
-    }
 
+        // Saving the new cost into DB.
+        await cost.save().then(user => res.status(201).json(user + '\n\n Cost saved successfully!'))
+            .catch(error => res.status(400).send('There was a problem saving the cost. \n' + error));
+    } else{ // Found error in the inputs
+        res.status(404).send(message); }
 });
 
 /**
